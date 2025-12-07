@@ -496,19 +496,53 @@ export default function AdminDashboard() {
     yPos += 10;
 
     if (distributions.length > 0) {
+      // Group distributions by product
+      const distributionsByProduct: { [key: string]: any[] } = {};
       distributions.forEach((dist) => {
-        if (yPos > 270) {
+        if (!distributionsByProduct[dist.product.name]) {
+          distributionsByProduct[dist.product.name] = [];
+        }
+        distributionsByProduct[dist.product.name].push(dist);
+      });
+
+      // Display grouped distributions
+      Object.keys(distributionsByProduct).forEach((productName) => {
+        const productDists = distributionsByProduct[productName];
+        const totalQty = productDists.reduce((sum, d) => sum + d.quantity, 0);
+
+        if (yPos > 260) {
           doc.addPage();
           yPos = 20;
         }
 
-        doc.text(`Product: ${dist.product.name}`, 25, yPos);
-        yPos += 6;
-        doc.text(`Distributor: ${dist.distributor.name}`, 30, yPos);
-        yPos += 6;
-        doc.text(`To: ${dist.recipientName}, Qty: ${dist.quantity}`, 30, yPos);
-        yPos += 8;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${productName} (Total: ${totalQty} units)`, 25, yPos);
+        doc.setFont(undefined, 'normal');
+        yPos += 7;
+
+        doc.setFontSize(10);
+        productDists.forEach((dist) => {
+          if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.text(`  • ${dist.distributor.name} → ${dist.recipientName}: ${dist.quantity} units`, 30, yPos);
+          yPos += 6;
+
+          if (dist.notes) {
+            doc.setFontSize(9);
+            doc.text(`    Note: ${dist.notes}`, 35, yPos);
+            doc.setFontSize(10);
+            yPos += 5;
+          }
+        });
+        yPos += 5;
       });
+    } else {
+      doc.text('No distributions recorded', 25, yPos);
+      yPos += 10;
     }
 
     // Save the PDF
