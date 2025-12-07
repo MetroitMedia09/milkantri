@@ -56,26 +56,32 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      distributions: distributions.map(dist => ({
-        id: dist._id,
-        product: {
-          id: (dist.product as any)._id,
-          name: (dist.product as any).name,
-        },
-        distributor: {
-          id: (dist.distributor as any)._id,
-          name: (dist.distributor as any).name,
-          email: (dist.distributor as any).email,
-        },
-        allotment: {
-          id: (dist.allotment as any)._id,
-          quantity: (dist.allotment as any).quantity,
-        },
-        recipientName: dist.recipientName,
-        quantity: dist.quantity,
-        notes: dist.notes,
-        createdAt: dist.createdAt,
-      }))
+      distributions: distributions.map(dist => {
+        const product = dist.product as any;
+        const distributor = dist.distributor as any;
+        const allotment = dist.allotment as any;
+
+        return {
+          id: dist._id,
+          product: product ? {
+            id: product._id,
+            name: product.name,
+          } : null,
+          distributor: distributor ? {
+            id: distributor._id,
+            name: distributor.name,
+            email: distributor.email,
+          } : null,
+          allotment: allotment ? {
+            id: allotment._id,
+            quantity: allotment.quantity,
+          } : null,
+          recipientName: dist.recipientName,
+          quantity: dist.quantity,
+          notes: dist.notes,
+          createdAt: dist.createdAt,
+        };
+      })
     });
   } catch (error) {
     console.error('Fetch distributions error:', error);
