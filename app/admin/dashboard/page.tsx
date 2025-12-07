@@ -513,16 +513,16 @@ export default function AdminDashboard() {
           }
 
           doc.text(`  • ${allot.distributor.name}: ${allot.quantity} units (${allot.status})`, 30, yPos);
-          yPos += 6;
+          yPos += 5;
 
           if (allot.notes) {
             doc.setFontSize(9);
             doc.text(`    Note: ${allot.notes}`, 35, yPos);
             doc.setFontSize(10);
-            yPos += 5;
+            yPos += 4;
           }
         });
-        yPos += 5;
+        yPos += 3;
       });
     }
 
@@ -571,17 +571,17 @@ export default function AdminDashboard() {
             yPos = 20;
           }
 
-          doc.text(`  • ${dist.distributor.name} → ${dist.recipientName}: ${dist.quantity} units`, 30, yPos);
-          yPos += 6;
+          doc.text(`  • ${dist.distributor.name} to ${dist.recipientName}: ${dist.quantity} units`, 30, yPos);
+          yPos += 5;
 
           if (dist.notes) {
             doc.setFontSize(9);
             doc.text(`    Note: ${dist.notes}`, 35, yPos);
             doc.setFontSize(10);
-            yPos += 5;
+            yPos += 4;
           }
         });
-        yPos += 5;
+        yPos += 3;
       });
     } else {
       doc.text('No distributions recorded', 25, yPos);
