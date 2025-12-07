@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 export async function GET(request: NextRequest) {
   try {

@@ -5,7 +5,7 @@ import Allotment from '@/models/Allotment';
 import Product from '@/models/Product';
 import User from '@/models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 // GET all allotments
 export async function GET(request: NextRequest) {

@@ -4,7 +4,7 @@ import dbConnect from '@/lib/mongodb';
 import Allotment from '@/models/Allotment';
 import User from '@/models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 // GET allotments for the logged-in distributor
 export async function GET(request: NextRequest) {

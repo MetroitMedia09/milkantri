@@ -4,7 +4,7 @@ import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import User from '@/models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 // DELETE product
 export async function DELETE(

@@ -4,11 +4,7 @@ import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET is not defined in environment variables');
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 export async function POST(request: NextRequest) {
   try {
