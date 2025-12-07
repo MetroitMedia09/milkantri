@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -13,7 +14,9 @@ export default function AdminDashboard() {
     product: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "distributors" | "inventory">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "distributors" | "inventory" | "distributions">("dashboard");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerClosing, setIsDrawerClosing] = useState(false);
 
   // Distributor states
   const [distributors, setDistributors] = useState<any[]>([]);
@@ -56,6 +59,10 @@ export default function AdminDashboard() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
+  // Distributions states
+  const [distributions, setDistributions] = useState<any[]>([]);
+  const [isLoadingDistributions, setIsLoadingDistributions] = useState(true);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
@@ -75,6 +82,7 @@ export default function AdminDashboard() {
     fetchProducts(token);
     fetchDistributors(token);
     fetchAllotments(token);
+    fetchDistributions(token);
   }, [router]);
 
   const fetchProducts = async (token: string) => {
@@ -131,6 +139,48 @@ export default function AdminDashboard() {
       console.error("Failed to fetch allotments:", error);
     } finally {
       setIsLoadingAllotments(false);
+    }
+  };
+
+  const fetchDistributions = async (token: string) => {
+    try {
+      const response = await fetch("/api/distributions", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setDistributions(data.distributions);
+      }
+    } catch (error) {
+      console.error("Failed to fetch distributions:", error);
+    } finally {
+      setIsLoadingDistributions(false);
+    }
+  };
+
+  const handleDeleteDistribution = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this distribution?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/distributions/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchDistributions(token!);
+      } else {
+        alert(data.message || "Failed to delete distribution");
+      }
+    } catch (error) {
+      alert("An error occurred. Please try again.");
     }
   };
 
@@ -357,6 +407,7 @@ export default function AdminDashboard() {
       if (data.success) {
         fetchProducts(token!);
         fetchAllotments(token!);
+        fetchDistributions(token!);
         setShowResetModal(false);
       }
     } catch (error) {
@@ -364,6 +415,104 @@ export default function AdminDashboard() {
     } finally {
       setIsResetting(false);
     }
+  };
+
+  // Drawer close with animation
+  const handleCloseDrawer = () => {
+    setIsDrawerClosing(true);
+    setTimeout(() => {
+      setIsDrawerOpen(false);
+      setIsDrawerClosing(false);
+    }, 300); // Match animation duration
+  };
+
+  // PDF Report Generation
+  const handleDownloadReport = () => {
+    const doc = new jsPDF();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Title
+    doc.setFontSize(20);
+    doc.text('Daily Inventory Report', 105, 20, { align: 'center' });
+
+    // Date and Time
+    doc.setFontSize(10);
+    doc.text(`Report Generated: ${dateStr} at ${timeStr}`, 105, 30, { align: 'center' });
+
+    let yPos = 45;
+
+    // Products Summary
+    doc.setFontSize(14);
+    doc.text('Products Summary', 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(10);
+    products.forEach((product) => {
+      const productAllotments = allotments.filter(a => a.product.id === product.id);
+      const totalAllotted = productAllotments.reduce((sum, a) => sum + a.quantity, 0);
+      const remaining = product.quantity;
+
+      doc.text(`${product.name}:`, 25, yPos);
+      doc.text(`Allotted: ${totalAllotted}, Remaining: ${remaining}`, 80, yPos);
+      yPos += 7;
+
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+    });
+
+    // Allotments Summary
+    yPos += 10;
+    doc.setFontSize(14);
+    doc.text('Allotments Summary', 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(10);
+    doc.text(`Total Allotments: ${allotments.length}`, 25, yPos);
+    yPos += 7;
+    doc.text(`Pending: ${allotments.filter(a => a.status === 'pending').length}`, 25, yPos);
+    yPos += 7;
+    doc.text(`Collected: ${allotments.filter(a => a.status === 'collected').length}`, 25, yPos);
+    yPos += 7;
+    doc.text(`Returned: ${allotments.filter(a => a.status === 'returned').length}`, 25, yPos);
+    yPos += 10;
+
+    if (yPos > 270) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Distributions Summary
+    doc.setFontSize(14);
+    doc.text('Distributions Summary', 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(10);
+    doc.text(`Total Distributions: ${distributions.length}`, 25, yPos);
+    yPos += 10;
+
+    if (distributions.length > 0) {
+      distributions.forEach((dist) => {
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.text(`Product: ${dist.product.name}`, 25, yPos);
+        yPos += 6;
+        doc.text(`Distributor: ${dist.distributor.name}`, 30, yPos);
+        yPos += 6;
+        doc.text(`To: ${dist.recipientName}, Qty: ${dist.quantity}`, 30, yPos);
+        yPos += 8;
+      });
+    }
+
+    // Save the PDF
+    doc.save(`inventory-report-${now.toISOString().split('T')[0]}.pdf`);
+    setIsDrawerOpen(false);
   };
 
   if (!user) {
@@ -382,7 +531,17 @@ export default function AdminDashboard() {
       {/* Header - Fixed */}
       <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
         <div className="px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
+          </div>
           <div className="flex items-center gap-3">
             <span className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
               {user.role}
@@ -757,6 +916,75 @@ export default function AdminDashboard() {
           </>
         )}
 
+        {/* Distributions Tab */}
+        {activeTab === "distributions" && (
+          <>
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold mb-6 text-gray-800">All Distributions</h2>
+
+              {isLoadingDistributions ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Loading distributions...</p>
+                </div>
+              ) : distributions.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <svg className="w-20 h-20 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-base font-medium">No distributions yet</p>
+                  <p className="text-sm mt-2 opacity-75">Distributors will distribute collected allotments to shopkeepers</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {distributions.map((dist) => (
+                    <div
+                      key={dist.id}
+                      className="p-5 bg-gray-50 rounded-xl border border-gray-100"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg text-gray-900">{dist.product.name}</h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Distributor: {dist.distributor.name}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            To: {dist.recipientName}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-600">Quantity</p>
+                          <p className="text-2xl font-bold text-primary">{dist.quantity}</p>
+                        </div>
+                      </div>
+
+                      {dist.notes && (
+                        <div className="mb-3 p-3 bg-white rounded-lg">
+                          <p className="text-xs text-gray-600 mb-1">Notes</p>
+                          <p className="text-sm text-gray-700">{dist.notes}</p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                        <span>{new Date(dist.createdAt).toLocaleString()}</span>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDeleteDistribution(dist.id)}
+                          className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
       </main>
 
       {/* Bottom Navigation */}
@@ -799,15 +1027,15 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab("distributors")}
+            onClick={() => setActiveTab("distributions")}
             className={`flex-1 flex flex-col items-center py-3 px-2 transition ${
-              activeTab === "distributors" ? "text-primary" : "text-gray-500"
+              activeTab === "distributions" ? "text-primary" : "text-gray-500"
             }`}
           >
             <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <span className="text-xs font-medium">Distributors</span>
+            <span className="text-xs font-medium">Distributions</span>
           </button>
         </div>
       </nav>
@@ -1090,7 +1318,7 @@ export default function AdminDashboard() {
               Reset Daily Inventory?
             </h3>
             <p className="text-gray-600 text-center mb-6">
-              This will reset all product quantities to 0 and clear all allotments. This action cannot be undone.
+              This will reset all product quantities to 0 and clear all allotments and distributions. This action cannot be undone.
             </p>
 
             <div className="flex gap-3">
@@ -1111,6 +1339,80 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Drawer Menu */}
+      {isDrawerOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-50 transition-opacity ${
+              isDrawerClosing ? 'animate-fadeOut' : 'animate-fadeIn'
+            }`}
+            onClick={handleCloseDrawer}
+          />
+
+          {/* Drawer */}
+          <div className={`fixed top-0 left-0 h-full w-80 bg-white/95 backdrop-blur-xl shadow-2xl z-50 transform transition-all duration-300 ease-out border-r border-white/20 ${
+            isDrawerClosing ? 'animate-slideOutLeft' : 'animate-slideInLeft'
+          }`}>
+            <div className="flex flex-col h-full">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-800">Menu</h2>
+                <button
+                  onClick={handleCloseDrawer}
+                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Drawer Content */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <nav className="space-y-3">
+                  {/* Distributors */}
+                  <button
+                    onClick={() => {
+                      setActiveTab("distributors");
+                      handleCloseDrawer();
+                    }}
+                    className="w-full flex items-center gap-4 p-4 text-left text-gray-700 bg-white/50 hover:bg-primary/20 hover:text-primary rounded-xl transition-all duration-200 shadow-sm hover:shadow-md border border-gray-100 hover:border-primary/30"
+                  >
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold">Distributors</span>
+                  </button>
+
+                  {/* Reports */}
+                  <button
+                    onClick={handleDownloadReport}
+                    className="w-full flex items-center gap-4 p-4 text-left text-gray-700 bg-white/50 hover:bg-primary/20 hover:text-primary rounded-xl transition-all duration-200 shadow-sm hover:shadow-md border border-gray-100 hover:border-primary/30"
+                  >
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold">Download Report</span>
+                  </button>
+                </nav>
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-gray-200">
+                <p className="text-xs text-gray-500 text-center">
+                  Milk Distribution System v1.0
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

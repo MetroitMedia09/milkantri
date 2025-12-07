@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import Allotment from '@/models/Allotment';
 import Product from '@/models/Product';
+import Distribution from '@/models/Distribution';
 import User from '@/models/User';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
@@ -43,20 +44,25 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // Get all allotments
+    // Get counts before deletion
     const allotments = await Allotment.find();
+    const distributions = await Distribution.find();
 
     // Reset all product quantities to 0
     const resetResult = await Product.updateMany({}, { quantity: 0 });
 
     // Delete all allotments
-    const deletedResult = await Allotment.deleteMany({});
+    const deletedAllotmentsResult = await Allotment.deleteMany({});
+
+    // Delete all distributions
+    const deletedDistributionsResult = await Distribution.deleteMany({});
 
     return NextResponse.json({
       success: true,
       message: 'Inventory reset successfully',
       restoredProducts: resetResult.modifiedCount || 0,
-      deletedAllotments: deletedResult.deletedCount || allotments.length
+      deletedAllotments: deletedAllotmentsResult.deletedCount || allotments.length,
+      deletedDistributions: deletedDistributionsResult.deletedCount || distributions.length
     });
   } catch (error) {
     console.error('Reset inventory error:', error);

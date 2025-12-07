@@ -8,6 +8,7 @@ export default function DistributorDashboard() {
   const [user, setUser] = useState<any>(null);
   const [allotments, setAllotments] = useState<any[]>([]);
   const [isLoadingAllotments, setIsLoadingAllotments] = useState(true);
+  const [updatingAllotmentId, setUpdatingAllotmentId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -44,6 +45,44 @@ export default function DistributorDashboard() {
       console.error("Failed to fetch allotments:", error);
     } finally {
       setIsLoadingAllotments(false);
+    }
+  };
+
+  const handleMarkAsCollected = async (allotmentId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setUpdatingAllotmentId(allotmentId);
+
+    try {
+      const response = await fetch(`/api/allotments/${allotmentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "collected" }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update the local state
+        setAllotments((prev) =>
+          prev.map((allot) =>
+            allot.id === allotmentId
+              ? { ...allot, status: "collected" }
+              : allot
+          )
+        );
+      } else {
+        alert(data.message || "Failed to update allotment");
+      }
+    } catch (error) {
+      console.error("Failed to mark as collected:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setUpdatingAllotmentId(null);
     }
   };
 
@@ -84,8 +123,8 @@ export default function DistributorDashboard() {
         </div>
       </header>
 
-      {/* Main Content - With proper spacing for fixed header */}
-      <main className="pt-20 pb-6 px-4 max-w-2xl mx-auto">
+      {/* Main Content - With proper spacing for fixed header and bottom nav */}
+      <main className="pt-20 pb-24 px-4 max-w-2xl mx-auto">
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-primary text-white rounded-xl shadow-lg p-6">
             <h3 className="text-sm opacity-90 mb-2">Total Allotments</h3>
@@ -159,12 +198,50 @@ export default function DistributorDashboard() {
                       <p className="text-sm text-gray-700">{allotment.notes}</p>
                     </div>
                   )}
+
+                  {allotment.status === 'pending' && (
+                    <div className="mt-4">
+                      <button
+                        onClick={() => handleMarkAsCollected(allotment.id)}
+                        disabled={updatingAllotmentId === allotment.id}
+                        className="w-full bg-primary hover:bg-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
+                      >
+                        {updatingAllotmentId === allotment.id
+                          ? "Updating..."
+                          : "Mark as Collected"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
       </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        <div className="flex items-center justify-around max-w-2xl mx-auto">
+          <button
+            className="flex-1 flex flex-col items-center py-3 px-2 transition text-primary"
+          >
+            <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="text-xs font-medium">Home</span>
+          </button>
+
+          <button
+            onClick={() => router.push("/distributor/distributions")}
+            className="flex-1 flex flex-col items-center py-3 px-2 transition text-gray-500 hover:text-primary"
+          >
+            <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="text-xs font-medium">Distributions</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
