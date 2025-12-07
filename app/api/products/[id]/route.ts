@@ -112,7 +112,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, quantity } = body;
+    const { name, quantity, dailyQuantity } = body;
 
     // Validate input
     if (!name || quantity === undefined) {
@@ -129,14 +129,21 @@ export async function PUT(
       }, { status: 400 });
     }
 
+    // Prepare update object
+    const updateData: any = {
+      name: name.trim(),
+      quantity: parseInt(quantity),
+    };
+
+    // Only update dailyQuantity if explicitly provided
+    if (dailyQuantity !== undefined) {
+      updateData.dailyQuantity = parseInt(dailyQuantity);
+    }
+
     // Update product
     const product = await Product.findByIdAndUpdate(
       id,
-      {
-        name: name.trim(),
-        quantity: parseInt(quantity),
-        dailyQuantity: parseInt(quantity),
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -214,6 +221,7 @@ export async function GET(
         id: product._id,
         name: product.name,
         quantity: product.quantity,
+        dailyQuantity: product.dailyQuantity,
         createdAt: product.createdAt,
         updatedAt: product.updatedAt,
       }

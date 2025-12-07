@@ -46,16 +46,8 @@ export async function POST(request: NextRequest) {
     // Get all allotments
     const allotments = await Allotment.find();
 
-    // Get all products and reset them to their daily quantities
-    const products = await Product.find();
-    let restoredCount = 0;
-
-    for (const product of products) {
-      await Product.findByIdAndUpdate(product._id, {
-        quantity: product.dailyQuantity
-      });
-      restoredCount++;
-    }
+    // Reset all product quantities to 0
+    const resetResult = await Product.updateMany({}, { quantity: 0 });
 
     // Delete all allotments
     const deletedResult = await Allotment.deleteMany({});
@@ -63,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Inventory reset successfully',
-      restoredProducts: restoredCount,
+      restoredProducts: resetResult.modifiedCount || 0,
       deletedAllotments: deletedResult.deletedCount || allotments.length
     });
   } catch (error) {

@@ -66,8 +66,8 @@ export default function DistributorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
+      {/* Header - Fixed */}
+      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
         <div className="px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
           <div className="flex items-center gap-3">
@@ -84,8 +84,8 @@ export default function DistributorDashboard() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="p-4 max-w-2xl mx-auto">
+      {/* Main Content - With proper spacing for fixed header */}
+      <main className="pt-20 pb-6 px-4 max-w-2xl mx-auto">
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-primary text-white rounded-xl shadow-lg p-6">
             <h3 className="text-sm opacity-90 mb-2">Total Allotments</h3>

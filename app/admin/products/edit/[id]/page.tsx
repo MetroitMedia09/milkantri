@@ -109,8 +109,8 @@ export default function EditProduct() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
+      {/* Header - Fixed */}
+      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
         <div className="px-4 py-5 flex items-center gap-4">
           <button
             onClick={() => router.back()}
@@ -124,8 +124,8 @@ export default function EditProduct() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="p-4 max-w-2xl mx-auto">
+      {/* Main Content - With proper spacing for fixed header */}
+      <main className="pt-24 pb-6 px-4 max-w-2xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-8 mt-4">
           {/* Error Message */}
           {error && (

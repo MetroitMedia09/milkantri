@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Fetch all products, sorted by newest first
     const products = await Product.find()
       .sort({ createdAt: -1 })
-      .select('name quantity createdAt updatedAt');
+      .select('name quantity dailyQuantity createdAt updatedAt');
 
     return NextResponse.json({
       success: true,
@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
         id: p._id,
         name: p.name,
         quantity: p.quantity,
+        dailyQuantity: p.dailyQuantity,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       })),
