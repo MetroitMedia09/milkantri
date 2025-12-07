@@ -56,17 +56,17 @@ export async function GET(
       distribution: {
         id: distribution._id,
         product: {
-          id: distribution.product._id,
-          name: distribution.product.name,
+          id: (distribution.product as any)._id,
+          name: (distribution.product as any).name,
         },
         distributor: {
-          id: distribution.distributor._id,
-          name: distribution.distributor.name,
-          email: distribution.distributor.email,
+          id: (distribution.distributor as any)._id,
+          name: (distribution.distributor as any).name,
+          email: (distribution.distributor as any).email,
         },
         allotment: {
-          id: distribution.allotment._id,
-          quantity: distribution.allotment.quantity,
+          id: (distribution.allotment as any)._id,
+          quantity: (distribution.allotment as any).quantity,
         },
         recipientName: distribution.recipientName,
         quantity: distribution.quantity,
@@ -194,17 +194,17 @@ export async function PUT(
       distribution: {
         id: populatedDistribution._id,
         product: {
-          id: populatedDistribution.product._id,
-          name: populatedDistribution.product.name,
+          id: (populatedDistribution.product as any)._id,
+          name: (populatedDistribution.product as any).name,
         },
         distributor: {
-          id: populatedDistribution.distributor._id,
-          name: populatedDistribution.distributor.name,
-          email: populatedDistribution.distributor.email,
+          id: (populatedDistribution.distributor as any)._id,
+          name: (populatedDistribution.distributor as any).name,
+          email: (populatedDistribution.distributor as any).email,
         },
         allotment: {
-          id: populatedDistribution.allotment._id,
-          quantity: populatedDistribution.allotment.quantity,
+          id: (populatedDistribution.allotment as any)._id,
+          quantity: (populatedDistribution.allotment as any).quantity,
         },
         recipientName: populatedDistribution.recipientName,
         quantity: populatedDistribution.quantity,
