@@ -516,9 +516,7 @@ export default function AdminDashboard() {
         }
 
         doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
         doc.text(`${productName} (Total: ${totalQty} units)`, 25, yPos);
-        doc.setFont(undefined, 'normal');
         yPos += 7;
 
         doc.setFontSize(10);
