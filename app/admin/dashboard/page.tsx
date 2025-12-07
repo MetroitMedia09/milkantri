@@ -481,6 +481,51 @@ export default function AdminDashboard() {
     doc.text(`Returned: ${allotments.filter(a => a.status === 'returned').length}`, 25, yPos);
     yPos += 10;
 
+    if (allotments.length > 0) {
+      // Group allotments by product
+      const allotmentsByProduct: { [key: string]: any[] } = {};
+      allotments.forEach((allot) => {
+        if (!allotmentsByProduct[allot.product.name]) {
+          allotmentsByProduct[allot.product.name] = [];
+        }
+        allotmentsByProduct[allot.product.name].push(allot);
+      });
+
+      // Display grouped allotments
+      Object.keys(allotmentsByProduct).forEach((productName) => {
+        const productAllots = allotmentsByProduct[productName];
+        const totalQty = productAllots.reduce((sum, a) => sum + a.quantity, 0);
+
+        if (yPos > 260) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(11);
+        doc.text(`${productName} (Total: ${totalQty} units)`, 25, yPos);
+        yPos += 7;
+
+        doc.setFontSize(10);
+        productAllots.forEach((allot) => {
+          if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.text(`  • ${allot.distributor.name}: ${allot.quantity} units (${allot.status})`, 30, yPos);
+          yPos += 6;
+
+          if (allot.notes) {
+            doc.setFontSize(9);
+            doc.text(`    Note: ${allot.notes}`, 35, yPos);
+            doc.setFontSize(10);
+            yPos += 5;
+          }
+        });
+        yPos += 5;
+      });
+    }
+
     if (yPos > 270) {
       doc.addPage();
       yPos = 20;
