@@ -188,6 +188,13 @@ export async function PUT(
       .populate('distributor', 'name email')
       .populate('allotment', 'quantity');
 
+    if (!populatedDistribution) {
+      return NextResponse.json({
+        success: false,
+        message: 'Distribution not found after update'
+      }, { status: 404 });
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Distribution updated successfully',
