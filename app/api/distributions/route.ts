@@ -59,17 +59,17 @@ export async function GET(request: NextRequest) {
       distributions: distributions.map(dist => ({
         id: dist._id,
         product: {
-          id: dist.product._id,
-          name: dist.product.name,
+          id: (dist.product as any)._id,
+          name: (dist.product as any).name,
         },
         distributor: {
-          id: dist.distributor._id,
-          name: dist.distributor.name,
-          email: dist.distributor.email,
+          id: (dist.distributor as any)._id,
+          name: (dist.distributor as any).name,
+          email: (dist.distributor as any).email,
         },
         allotment: {
-          id: dist.allotment._id,
-          quantity: dist.allotment.quantity,
+          id: (dist.allotment as any)._id,
+          quantity: (dist.allotment as any).quantity,
         },
         recipientName: dist.recipientName,
         quantity: dist.quantity,
@@ -193,23 +193,30 @@ export async function POST(request: NextRequest) {
       .populate('distributor', 'name email')
       .populate('allotment', 'quantity');
 
+    if (!populatedDistribution) {
+      return NextResponse.json({
+        success: false,
+        message: 'Distribution not found after creation'
+      }, { status: 404 });
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Distribution created successfully',
       distribution: {
         id: populatedDistribution._id,
         product: {
-          id: populatedDistribution.product._id,
-          name: populatedDistribution.product.name,
+          id: (populatedDistribution.product as any)._id,
+          name: (populatedDistribution.product as any).name,
         },
         distributor: {
-          id: populatedDistribution.distributor._id,
-          name: populatedDistribution.distributor.name,
-          email: populatedDistribution.distributor.email,
+          id: (populatedDistribution.distributor as any)._id,
+          name: (populatedDistribution.distributor as any).name,
+          email: (populatedDistribution.distributor as any).email,
         },
         allotment: {
-          id: populatedDistribution.allotment._id,
-          quantity: populatedDistribution.allotment.quantity,
+          id: (populatedDistribution.allotment as any)._id,
+          quantity: (populatedDistribution.allotment as any).quantity,
         },
         recipientName: populatedDistribution.recipientName,
         quantity: populatedDistribution.quantity,

@@ -46,20 +46,20 @@ export async function GET(request: NextRequest) {
       allotments: allotments.map(allot => ({
         id: allot._id,
         product: {
-          id: allot.product._id,
-          name: allot.product.name,
+          id: (allot.product as any)._id,
+          name: (allot.product as any).name,
         },
         distributor: {
-          id: allot.distributor._id,
-          name: allot.distributor.name,
-          email: allot.distributor.email,
+          id: (allot.distributor as any)._id,
+          name: (allot.distributor as any).name,
+          email: (allot.distributor as any).email,
         },
         quantity: allot.quantity,
         status: allot.status,
         notes: allot.notes,
         allottedBy: {
-          id: allot.allottedBy._id,
-          name: allot.allottedBy.name,
+          id: (allot.allottedBy as any)._id,
+          name: (allot.allottedBy as any).name,
         },
         createdAt: allot.createdAt,
       }))
@@ -173,19 +173,26 @@ export async function POST(request: NextRequest) {
       .populate('distributor', 'name email')
       .populate('allottedBy', 'name');
 
+    if (!populatedAllotment) {
+      return NextResponse.json({
+        success: false,
+        message: 'Allotment not found after creation'
+      }, { status: 404 });
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Product allotted successfully',
       allotment: {
         id: populatedAllotment._id,
         product: {
-          id: populatedAllotment.product._id,
-          name: populatedAllotment.product.name,
+          id: (populatedAllotment.product as any)._id,
+          name: (populatedAllotment.product as any).name,
         },
         distributor: {
-          id: populatedAllotment.distributor._id,
-          name: populatedAllotment.distributor.name,
-          email: populatedAllotment.distributor.email,
+          id: (populatedAllotment.distributor as any)._id,
+          name: (populatedAllotment.distributor as any).name,
+          email: (populatedAllotment.distributor as any).email,
         },
         quantity: populatedAllotment.quantity,
         status: populatedAllotment.status,

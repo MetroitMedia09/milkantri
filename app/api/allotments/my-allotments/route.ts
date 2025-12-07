@@ -53,15 +53,15 @@ export async function GET(request: NextRequest) {
       allotments: allotments.map(allot => ({
         id: allot._id,
         product: {
-          id: allot.product._id,
-          name: allot.product.name,
+          id: (allot.product as any)._id,
+          name: (allot.product as any).name,
         },
         quantity: allot.quantity,
         status: allot.status,
         notes: allot.notes,
         allottedBy: {
-          id: allot.allottedBy._id,
-          name: allot.allottedBy.name,
+          id: (allot.allottedBy as any)._id,
+          name: (allot.allottedBy as any).name,
         },
         createdAt: allot.createdAt,
       }))
