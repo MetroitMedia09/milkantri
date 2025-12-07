@@ -56,6 +56,7 @@ export default function AdminDashboard() {
   // Inventory tracking states
   const [allotments, setAllotments] = useState<any[]>([]);
   const [isLoadingAllotments, setIsLoadingAllotments] = useState(true);
+  const [showReportDownloadModal, setShowReportDownloadModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
@@ -777,7 +778,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">Product Inventory</h2>
                 <button
-                  onClick={() => setShowResetModal(true)}
+                  onClick={() => setShowReportDownloadModal(true)}
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"
                 >
                   Reset Day
@@ -1296,6 +1297,46 @@ export default function AdminDashboard() {
                 className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isAllotting ? 'Allotting...' : 'Allot Product'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Download Pre-Confirmation Modal */}
+      {showReportDownloadModal && (
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-white/20">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              Before Resetting
+            </h3>
+            <p className="text-gray-600 text-center mb-6">
+              Did you download the daily report? This helps you keep a record before clearing the data.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReportDownloadModal(false)}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+              >
+                No
+              </button>
+              <button
+                onClick={() => {
+                  setShowReportDownloadModal(false);
+                  setShowResetModal(true);
+                }}
+                className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition font-medium"
+              >
+                Yes, Continue
               </button>
             </div>
           </div>
